@@ -1,0 +1,13 @@
+{
+  "name": "mira",
+  "version": "1.0.0",
+  "description": "Image creation service",
+  "main": "index.js",
+  "repository": "https://github.com/kawerewagaba/mira.git",
+  "author": "Kawere C. Wagaba <kawerewagaba@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "multer": "^1.4.2"
+  }
+}
