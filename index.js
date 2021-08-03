@@ -41,9 +41,12 @@ const addDockerfile = () => {
 
 /**
  * Access terminal and build the image
+ * TODO - wd should later be a dynamic directory
  */
-const buildImage = () => {
-  exec(`ls`, (error, stdout, stderr) => {
+const buildImage = (imageName, tag) => {
+  exec(`docker build -t ${imageName}:${tag} .`, {
+    cwd: './uploads'
+  }, (error, stdout, stderr) => {
     if (error) {
       console.log(`error: ${error.message}`);
       return;
@@ -53,12 +56,14 @@ const buildImage = () => {
 }
 
 app.post("/upload", upload.array("files"), (req, res) => {
+  const { imageName, tag } = req.body;
+  
   console.log(req.files);
-  console.log(req.body.imageName, req.body.tag);
+  console.log(imageName, tag);
   
   addDockerfile();
 
-  buildImage();
+  buildImage(imageName, tag);
   
   res.send('Files uploaded')
 });
