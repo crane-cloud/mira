@@ -3,6 +3,9 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const dockerCLI = require('docker-cli-js');
+var DockerOptions = dockerCLI.Options;
+var Docker = dockerCLI.Docker;
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -38,12 +41,33 @@ const addDockerfile = () => {
   });
 }
 
+/**
+ * Access terminal and build the image
+ * ? Do they provide both the image_name and tag ?
+ * TODO - wd should later be dynamic
+ */
+const buildImage = (res, imageName, tag) => {
+  const options = new DockerOptions(null, './uploads', true);   //machine_name:str (null = use local docker), wd:str, echo_output:bool
+  
+  const docker = new Docker(options);
+
+  docker.command(`build -t ${imageName}:${tag} .`)
+  .then((data) => {
+    console.log('data = ', data);
+    return res.send('Image build successful')
+  })
+  .catch((error) => {
+    console.log('error: ', error);
+    res.send('Image build failed');
+    return;
+  });
+}
+
 app.post("/upload", upload.array("files"), (req, res) => {
-  console.log(req.files);
-  
+  const { imageName, tag } = req.body;
+
   addDockerfile();
-  
-  res.send('Files uploaded')
+  buildImage(res, imageName, tag);
 });
 
 app.listen(PORT, console.log(`listening on PORT ${PORT}`));
