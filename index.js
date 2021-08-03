@@ -3,6 +3,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const { exec } = require("child_process");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -38,10 +39,26 @@ const addDockerfile = () => {
   });
 }
 
+/**
+ * Access terminal and build the image
+ */
+const buildImage = () => {
+  exec(`ls`, (error, stdout, stderr) => {
+    if (error) {
+      console.log(`error: ${error.message}`);
+      return;
+    }
+    console.log(`\n${stdout}`);
+  })
+}
+
 app.post("/upload", upload.array("files"), (req, res) => {
   console.log(req.files);
+  console.log(req.body.imageName, req.body.tag);
   
   addDockerfile();
+
+  buildImage();
   
   res.send('Files uploaded')
 });
