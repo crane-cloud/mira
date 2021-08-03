@@ -29,6 +29,25 @@ const fileStorageEngine = multer.diskStorage({
 const upload = multer({ storage: fileStorageEngine });
 
 
+const pushImage = (res, docker, imageName, tag) => {
+  const username = 'stevenaraka';
+  const image = `${imageName}:${tag}`;
+  const uri = `${username}/${image}`;
+  
+  docker.command(`tag ${image} ${uri} && docker push ${uri}`)
+    .then((data) => {
+      console.log('data = ', data);
+
+      return res.status(200).send({
+        uri,
+        message: 'Image build successful'
+      });
+    })
+    .catch((error) => {
+      console.log('error: ', error);
+      return 0;
+    });
+}
 
 /**
  * Copy a Dockerfile in dockerfiles folder, add to uploaded files directory
@@ -46,21 +65,21 @@ const addDockerfile = () => {
  * ? Do they provide both the image_name and tag ?
  * TODO - wd should later be dynamic
  */
-const buildImage = (res, imageName, tag) => {
+const buildImage = (res, imageName, tag = "latest") => {
   const options = new DockerOptions(null, './uploads', true);   //machine_name:str (null = use local docker), wd:str, echo_output:bool
-  
+
   const docker = new Docker(options);
 
   docker.command(`build -t ${imageName}:${tag} .`)
-  .then((data) => {
-    console.log('data = ', data);
-    return res.send('Image build successful')
-  })
-  .catch((error) => {
-    console.log('error: ', error);
-    res.send('Image build failed');
-    return;
-  });
+    .then((data) => {
+      console.log('data = ', data);
+      pushImage(res, docker, imageName, tag);
+    })
+    .catch((error) => {
+      console.log('error: ', error);
+      res.send('Image build failed');
+      return;
+    });
 }
 
 app.post("/upload", upload.array("files"), (req, res) => {
