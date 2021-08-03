@@ -41,31 +41,29 @@ const addDockerfile = () => {
 
 /**
  * Access terminal and build the image
- * TODO - wd should later be a dynamic directory
+ * ? Do they provide both the image_name and tag ?
+ * TODO - wd should later be dynamic
  */
-const buildImage = (imageName, tag) => {
-  exec(`docker build -t ${imageName}:${tag} .`, {
+const buildImage = (res, imageName, tag) => {
+  exec(`docker build -q -t ${imageName}:${tag} .`, {
     cwd: './uploads'
   }, (error, stdout, stderr) => {
-    if (error) {
+    if (error) {                                //! failure
       console.log(`error: ${error.message}`);
+      res.send('Image build failed');
       return;
     }
-    console.log(`\n${stdout}`);
+
+    console.log(`\n${stdout}`);                 // success
+    return res.send('Image build successful')
   })
 }
 
 app.post("/upload", upload.array("files"), (req, res) => {
   const { imageName, tag } = req.body;
-  
-  console.log(req.files);
-  console.log(imageName, tag);
-  
-  addDockerfile();
 
-  buildImage(imageName, tag);
-  
-  res.send('Files uploaded')
+  addDockerfile();
+  buildImage(res, imageName, tag);
 });
 
 app.listen(PORT, console.log(`listening on PORT ${PORT}`));
