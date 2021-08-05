@@ -54,7 +54,7 @@ const pushImage = (res, docker, imageName, tag) => {
  * TODO - logic for determning which dockerfile to choose 
  */
 const addDockerfile = () => {
-  fs.copyFile('./dockerfiles/html/Dockerfile', './uploads/Dockerfile', (err) => {
+  fs.copyFile('./preset_dockerfiles/html-nginx.txt', './uploads/Dockerfile', (err) => {
     if (err) throw err;
     console.log('Dockerfile copied to destination.txt');
   });
