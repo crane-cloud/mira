@@ -1,25 +1,35 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
-const path = require('path');
+const makeDir = require('make-dir');
+const { uniqueNamesGenerator, adjectives, animals } = require('unique-names-generator');
 const cors = require('cors');
 const dockerCLI = require('docker-cli-js');
-var DockerOptions = dockerCLI.Options;
-var Docker = dockerCLI.Docker;
+const DockerOptions = dockerCLI.Options;
+const Docker = dockerCLI.Docker;
 
 const app = express();
+
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 
+const makeAppDir = (req, res, next) => {
+  const appFolderName = uniqueNamesGenerator({
+    dictionaries: [adjectives, animals]
+  });
+
+  makeDir(`./uploads/${appFolderName}`)
+  req.appDir = appFolderName;
+  next()
+};
+
 /**
  * Multer create file storage engine and store
- * TODO - make directory dynamic i.e. /uploads/{someID}
- *  
  */
 const fileStorageEngine = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads");
+    cb(null, `./uploads/${req.appDir}`);
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
@@ -28,19 +38,17 @@ const fileStorageEngine = multer.diskStorage({
 
 const upload = multer({ storage: fileStorageEngine });
 
-
-const pushImage = (res, docker, imageName, tag) => {
+const pushImage = (res, docker, imageName) => {
   const username = 'stevenaraka';
-  const image = `${imageName}:${tag}`;
-  const uri = `${username}/${image}`;
-  
-  docker.command(`tag ${image} ${uri} && docker push ${uri}`)
+  const uri = `${username}/${imageName}`;
+
+  docker.command(`tag ${imageName} ${uri} && docker push ${uri}`)
     .then((data) => {
       console.log('data = ', data);
 
       return res.status(200).send({
-        uri,
-        message: 'Image build successful'
+        message: 'Image build successful',
+        uri
       });
     })
     .catch((error) => {
@@ -50,30 +58,28 @@ const pushImage = (res, docker, imageName, tag) => {
 }
 
 /**
- * Copy a Dockerfile in dockerfiles folder, add to uploaded files directory
- * TODO - logic for determning which dockerfile to choose 
+ * Add a preset Dockerfile
  */
-const addDockerfile = () => {
-  fs.copyFile('./dockerfiles/html/Dockerfile', './uploads/Dockerfile', (err) => {
+const addDockerfile = (dir) => {
+  fs.copyFile('./preset_dockerfiles/html-nginx.txt', `./uploads/${dir}/Dockerfile`, (err) => {
     if (err) throw err;
     console.log('Dockerfile copied to destination.txt');
   });
 }
 
 /**
- * Access terminal and build the image
- * ? Do they provide both the image_name and tag ?
- * TODO - wd should later be dynamic
+ * Build the image
  */
-const buildImage = (res, imageName, tag = "latest") => {
-  const options = new DockerOptions(null, './uploads', true);   //machine_name:str (null = use local docker), wd:str, echo_output:bool
-
+const buildImage = (res, dir, image) => {
+  const options = new DockerOptions(null, `./uploads/${dir}`, true);   //machine_name:str (null = use local docker), wd:str, echo_output:bool
   const docker = new Docker(options);
 
-  docker.command(`build -t ${imageName}:${tag} .`)
+  addDockerfile(dir);
+
+  docker.command(`build -t ${image} .`)
     .then((data) => {
       console.log('data = ', data);
-      pushImage(res, docker, imageName, tag);
+      pushImage(res, docker, image);
     })
     .catch((error) => {
       console.log('error: ', error);
@@ -82,11 +88,11 @@ const buildImage = (res, imageName, tag = "latest") => {
     });
 }
 
-app.post("/upload", upload.array("files"), (req, res) => {
-  const { imageName, tag } = req.body;
-
-  addDockerfile();
-  buildImage(res, imageName, tag);
+app.post("/upload", makeAppDir, upload.array("files"), (req, res) => {
+  const { imageName } = req.body;
+  const { appDir } = req;
+  
+  buildImage(res, appDir, imageName);
 });
 
 app.listen(PORT, console.log(`listening on PORT ${PORT}`));
