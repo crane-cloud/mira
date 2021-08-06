@@ -47,8 +47,8 @@ const pushImage = (res, docker, imageName) => {
       console.log('data = ', data);
 
       return res.status(200).send({
-        uri,
-        message: 'Image build successful'
+        message: 'Image build successful',
+        uri
       });
     })
     .catch((error) => {
@@ -79,7 +79,7 @@ const buildImage = (res, dir, image) => {
   docker.command(`build -t ${image} .`)
     .then((data) => {
       console.log('data = ', data);
-      // pushImage(res, docker, image);
+      pushImage(res, docker, image);
     })
     .catch((error) => {
       console.log('error: ', error);
