@@ -1,7 +1,6 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
-const makeDir = require('make-dir');
 const { uniqueNamesGenerator, adjectives, animals } = require('unique-names-generator');
 const cors = require('cors');
 const dockerCLI = require('docker-cli-js');
@@ -112,7 +111,7 @@ const buildImage = (res, dir, image) => {
 app.post("/upload", makeAppDir, upload.array("files"), (req, res) => {
   const { imageName } = req.body;
   const { appDir } = req;
-  
+
   buildImage(res, appDir, imageName);
 });
 
