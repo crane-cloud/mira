@@ -19,20 +19,41 @@ const makeAppDir = (req, res, next) => {
     dictionaries: [adjectives, animals]
   });
 
-  makeDir(`./uploads/${appFolderName}`)
+  const dir = `./uploads/${appFolderName}`
+
+  if (!fs.existsSync(dir)){          // create folder if not exists TODO: might need to handle "if exists"
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  
   req.appDir = appFolderName;
   next()
 };
+
+const getFile = (originalFilename) => {
+  return originalFilename.split("|").pop();
+}
+
+const getFolderPath = (appFolder, originalFilename) => {
+  const topDir = `./uploads/${appFolder}/`;
+  const filePath = originalFilename.substring(0, originalFilename.lastIndexOf("|")).split("|").join("/");
+  const folderPath = `${topDir}${filePath}`;
+
+  if (!fs.existsSync(folderPath)){
+    fs.mkdirSync(folderPath, { recursive: true });
+  }
+
+  return folderPath;
+}
 
 /**
  * Multer create file storage engine and store
  */
 const fileStorageEngine = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, `./uploads/${req.appDir}`);
+    cb(null, `${getFolderPath(req.appDir, file.originalname)}`);
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    cb(null, getFile(file.originalname));
   }
 });
 
