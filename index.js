@@ -1,7 +1,8 @@
 const express = require('express');
 const fs = require('fs');
 const upload = require('./middleware/multer');
-const { uniqueNamesGenerator, adjectives, animals } = require('unique-names-generator');
+const createAppDir = require('./middleware/createDir');
+const addDockerfile = require('./helpers/addDockerfile');
 const cors = require('cors');
 const dockerCLI = require('docker-cli-js');
 const DockerOptions = dockerCLI.Options;
@@ -13,20 +14,6 @@ const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 
-const makeAppDir = (req, res, next) => {
-  const appFolderName = uniqueNamesGenerator({
-    dictionaries: [adjectives, animals]
-  });
-
-  const dir = `./uploads/${appFolderName}`
-
-  if (!fs.existsSync(dir)){          // create folder if not exists TODO: might need to handle "if exists"
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  
-  req.appDir = appFolderName;
-  next()
-};
 
 const pushImage = (res, docker, imageName) => {
   const username = 'stevenaraka';
@@ -45,16 +32,6 @@ const pushImage = (res, docker, imageName) => {
       console.log('error: ', error);
       return 0;
     });
-}
-
-/**
- * Add a preset Dockerfile
- */
-const addDockerfile = (dir) => {
-  fs.copyFile('./preset_dockerfiles/html-nginx.txt', `./uploads/${dir}/Dockerfile`, (err) => {
-    if (err) throw err;
-    console.log('Dockerfile copied to destination.txt');
-  });
 }
 
 /**
@@ -78,11 +55,11 @@ const buildImage = (res, dir, image) => {
     });
 }
 
-app.post("/upload", makeAppDir, upload.array("files"), (req, res) => {
+app.post("/upload", createAppDir, upload.array("files"), (req, res) => {
   const { imageName } = req.body;
   const { appDir } = req;
 
-  // buildImage(res, appDir, imageName);
+  buildImage(res, appDir, imageName);
 });
 
 app.listen(PORT, console.log(`listening on PORT ${PORT}`));
