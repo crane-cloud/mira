@@ -1,6 +1,6 @@
 const express = require('express');
-const multer = require('multer');
 const fs = require('fs');
+const upload = require('./middleware/multer');
 const { uniqueNamesGenerator, adjectives, animals } = require('unique-names-generator');
 const cors = require('cors');
 const dockerCLI = require('docker-cli-js');
@@ -27,36 +27,6 @@ const makeAppDir = (req, res, next) => {
   req.appDir = appFolderName;
   next()
 };
-
-const getFile = (originalFilename) => {
-  return originalFilename.split("|").pop();
-}
-
-const getFolderPath = (appFolder, originalFilename) => {
-  const topDir = `./uploads/${appFolder}/`;
-  const filePath = originalFilename.substring(0, originalFilename.lastIndexOf("|")).split("|").join("/");
-  const folderPath = `${topDir}${filePath}`;
-
-  if (!fs.existsSync(folderPath)){
-    fs.mkdirSync(folderPath, { recursive: true });
-  }
-
-  return folderPath;
-}
-
-/**
- * Multer create file storage engine and store
- */
-const fileStorageEngine = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, `${getFolderPath(req.appDir, file.originalname)}`);
-  },
-  filename: (req, file, cb) => {
-    cb(null, getFile(file.originalname));
-  }
-});
-
-const upload = multer({ storage: fileStorageEngine });
 
 const pushImage = (res, docker, imageName) => {
   const username = 'stevenaraka';
@@ -112,7 +82,7 @@ app.post("/upload", makeAppDir, upload.array("files"), (req, res) => {
   const { imageName } = req.body;
   const { appDir } = req;
 
-  buildImage(res, appDir, imageName);
+  // buildImage(res, appDir, imageName);
 });
 
 app.listen(PORT, console.log(`listening on PORT ${PORT}`));
