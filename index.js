@@ -37,7 +37,7 @@ const pushImage = (res, docker, { name, tag }) => {
 /**
  * Build the image
  */
-const buildImage = (res, dir, name, tag) => {
+const buildImage = (res, dir, { name, tag, framework }) => {
   const options = new DockerOptions(null, `./uploads/${dir}`, true);   //machine_name:str (null = use local docker), wd:str, echo_output:bool
   const docker = new Docker(options);
   const image = {
@@ -45,25 +45,26 @@ const buildImage = (res, dir, name, tag) => {
     tag: tag.trim() ? tag : 'latest'
   };
 
-  addDockerfile(dir);
+  addDockerfile(dir, framework);
 
-  docker.command(`build -t ${image.name}:${image.tag} .`)
-    .then((data) => {
-      console.log('data = ', data);
-      // pushImage(res, docker, image);
-    })
-    .catch((error) => {
-      console.log('error: ', error);
-      res.send('Image build failed');
-      return;
-    });
+  // docker.command(`build -t ${image.name}:${image.tag} .`)
+  //   .then((data) => {
+  //     console.log('data = ', data);
+  //     // pushImage(res, docker, image);
+  //   })
+  //   .catch((error) => {
+  //     console.log('error: ', error);
+  //     res.send('Image build failed');
+  //     return;
+  //   });
 }
 
 app.post("/upload", createAppDir, upload.array("files"), (req, res) => {
-  const { name, tag } = req.body;
+  const { name, tag, framework } = req.body;
   const { appDir } = req;
+  const appDetails = { name, tag, framework }
 
-  buildImage(res, appDir, name, tag);
+  buildImage(res, appDir, appDetails);
 });
 
 app.listen(PORT, console.log(`listening on PORT ${PORT}`));
