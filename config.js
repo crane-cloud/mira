@@ -1,0 +1,11 @@
+require("dotenv").config();
+
+const DOCKERHUB_USERNAME = process.env.DOCKERHUB_USERNAME;
+const DOCKERHUB_PASSWORD = process.env.DOCKERHUB_PASSWORD;
+const CRANECLOUD_BASE_URL = process.env.CRANECLOUD_BASE_URL;
+
+module.exports = {
+  DOCKERHUB_USERNAME,
+  DOCKERHUB_PASSWORD,
+  CRANECLOUD_BASE_URL,
+};

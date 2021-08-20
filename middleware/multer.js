@@ -1,17 +1,17 @@
-const multer = require('multer');
-const getFolderPath = require('../helpers/getFolder');
-const getFile = require('../helpers/getFile');
+const multer = require("multer");
+const getFolderPath = require("../helpers/getFolder");
+const getFile = require("../helpers/getFile");
 
 /**
  * Multer create file storage engine and store
  */
- const fileStorageEngine = multer.diskStorage({
+const fileStorageEngine = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, `${getFolderPath(req.appDir, file.originalname)}`);
   },
   filename: (req, file, cb) => {
     cb(null, getFile(file.originalname));
-  }
+  },
 });
 
 const upload = multer({ storage: fileStorageEngine });
