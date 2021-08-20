@@ -6,16 +6,16 @@ const cors = require("cors");
 const dockerCLI = require("docker-cli-js");
 const DockerOptions = dockerCLI.Options;
 const Docker = dockerCLI.Docker;
+
 const {
   DOCKERHUB_USERNAME,
   DOCKERHUB_PASSWORD,
-  CRANECLOUD_BASE_URL,
+  BASE_URL,
+  PORT,
 } = require("./config");
+
 const axios = require("axios");
-
 const app = express();
-
-const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 
@@ -36,7 +36,7 @@ const pushImage = async (res, docker, imageName) => {
 
     axios
       .post(
-        `${CRANECLOUD_BASE_URL}/projects/${project}/apps`,
+        `${BASE_URL}/projects/${project}/apps`,
         {
           image: imageName,
           name: "hello",
@@ -85,4 +85,6 @@ app.post("/", createAppDir, upload.array("files"), (req, res) => {
   buildImage(res, appDir, `${DOCKERHUB_USERNAME}/${imageName}`);
 });
 
-app.listen(PORT, console.log(`listening on PORT ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`...listening on ${PORT}`);
+});
