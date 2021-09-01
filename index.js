@@ -39,7 +39,7 @@ const pushImage = async (res, docker, imageName) => {
       {
         env_vars: {},
         image: imageName,
-        name: "hello",
+        name: "demoapp",
         project_id: project,
         private_image: false,
         replicas: 1,
@@ -82,10 +82,10 @@ const buildImage = (res, dir, image) => {
 };
 
 app.post("/", createAppDir, upload.array("files"), (req, res) => {
-  const { imageName } = req.body;
+  const { name } = req.body;
   const { appDir } = req;
 
-  buildImage(res, appDir, `${DOCKERHUB_USERNAME}/${imageName}`);
+  buildImage(res, appDir, `${DOCKERHUB_USERNAME}/${name}`);
 });
 
 app.listen(PORT, () => {
