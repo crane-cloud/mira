@@ -62,14 +62,14 @@ const pushImage = async (res, docker, imageName) => {
 /**
  * Build the image
  */
-const buildImage = (res, dir, image) => {
+const buildImage = (res, dir, framework, image) => {
   const options = new DockerOptions(null, `./uploads/${dir}`, true); //machine_name:str (null = use local docker), wd:str, echo_output:bool
   const docker = new Docker(options);
 
-  addDockerfile(dir);
+  addDockerfile(dir, framework);
 
   docker
-    .command(`build -t ${image}:latest .`)
+    .command(`build -t ${image} .`)
     .then((data) => {
       console.log("data = ", data);
       pushImage(res, docker, image);
@@ -82,10 +82,11 @@ const buildImage = (res, dir, image) => {
 };
 
 app.post("/", createAppDir, upload.array("files"), (req, res) => {
-  const { name } = req.body;
+  const { name, tag, framework } = req.body;
   const { appDir } = req;
+  const imgTag = tag.trim() ? tag : 'latest'
 
-  buildImage(res, appDir, `${DOCKERHUB_USERNAME}/${name}`);
+  buildImage(res, appDir, framework, `${DOCKERHUB_USERNAME}/${name}:${imgTag}`);
 });
 
 app.listen(PORT, () => {
