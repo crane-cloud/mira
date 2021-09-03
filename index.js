@@ -69,7 +69,7 @@ const buildImage = (res, dir, image) => {
   addDockerfile(dir);
 
   docker
-    .command(`build -t ${image}:latest .`)
+    .command(`build -t ${image} .`)
     .then((data) => {
       console.log("data = ", data);
       pushImage(res, docker, image);
@@ -82,10 +82,11 @@ const buildImage = (res, dir, image) => {
 };
 
 app.post("/", createAppDir, upload.array("files"), (req, res) => {
-  const { name } = req.body;
+  const { name, tag } = req.body;
   const { appDir } = req;
+  const imgTag = tag.trim() ? tag : 'latest'
 
-  buildImage(res, appDir, `${DOCKERHUB_USERNAME}/${name}`);
+  buildImage(res, appDir, `${DOCKERHUB_USERNAME}/${name}:${imgTag}`);
 });
 
 app.listen(PORT, () => {
