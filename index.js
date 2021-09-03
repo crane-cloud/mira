@@ -65,10 +65,6 @@ const pushImage = async (res, docker, imageName) => {
 const buildImage = (res, dir, framework, image) => {
   const options = new DockerOptions(null, `./uploads/${dir}`, true); //machine_name:str (null = use local docker), wd:str, echo_output:bool
   const docker = new Docker(options);
-  const image = {
-    name,
-    tag: tag.trim() ? tag : 'latest'
-  };
 
   addDockerfile(dir, framework);
 
