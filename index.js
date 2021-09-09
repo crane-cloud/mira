@@ -1,11 +1,13 @@
 const express = require("express");
-const upload = require("./middleware/multer");
-const createAppDir = require("./middleware/createDir");
-const addDockerfile = require("./helpers/addDockerfile");
 const cors = require("cors");
+
 const dockerCLI = require("docker-cli-js");
 const DockerOptions = dockerCLI.Options;
 const Docker = dockerCLI.Docker;
+
+const upload = require("./middleware/multer");
+const createAppDir = require("./middleware/createDir");
+const addDockerfile = require("./helpers/addDockerfile");
 
 const {
   DOCKERHUB_USERNAME,
@@ -19,27 +21,36 @@ const app = express();
 
 app.use(cors());
 
-const pushImage = async (res, docker, imageName) => {
+app.post("/", createAppDir, upload.array("files"), async (req, res) => {
+  const { project, token, framework, name, tag } = req.body;
+
   try {
+    const { appDir } = req;
+    addDockerfile(appDir, framework);
+
+    const options = new DockerOptions(null, `./uploads/${appDir}`, true);
+    const docker = new Docker(options);
+
+    const image = `${DOCKERHUB_USERNAME}/${name}:${tag}`;
+
     // auth
     await docker.command(
       `login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}`
     );
 
+    // build
+    await docker.command(`build -t ${image} .`);
+
     // push
-    await docker.command(`push ${imageName}`);
+    await docker.command(`push ${image}`);
 
     // deploy
-    const project = "37cc628c-5b9e-4b21-b41d-4d23e4c71769"; // TODO: shall be dynamic
-    const token =
-      "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MjkyNzQ0OTAsIm5iZiI6MTYyOTI3NDQ5MCwianRpIjoiNjcyNWEyZTktNWI3Yy00MjMzLTliMWItYWZlNTEwMGEyNzUzIiwiZXhwIjoxNjMwMTM4NDkwLCJpZGVudGl0eSI6ImJlZDVjODQwLTQ3MjUtNDczYi05MjA1LThiZWM2YThlNWM2YSIsImZyZXNoIjpmYWxzZSwidHlwZSI6ImFjY2VzcyIsInVzZXJfY2xhaW1zIjp7InJvbGVzIjpbeyJpZCI6IjdmN2ZiZGQ5LWMxMGQtNGRiMC1iOTQ3LWUyZDc0MmE2MTlhOSIsIm5hbWUiOiJjdXN0b21lciJ9XX19.0GQ8LnIjm5JLqMyzqfe-9kV2XIeYU_jNVl51TCJt5sc";
-
-    const result = await axios.post(
+    const deploy = await axios.post(
       `${BASE_URL}/projects/${project}/apps`,
       {
         env_vars: {},
-        image: imageName,
-        name: "demoapp",
+        image: image,
+        name: `${name}-${tag}`,
         project_id: project,
         private_image: false,
         replicas: 1,
@@ -51,42 +62,10 @@ const pushImage = async (res, docker, imageName) => {
       }
     );
 
-    console.log(result.data);
-  } catch (err) {
-    console.log(err);
-
-    return;
+    res.status(201).send(deploy.data);
+  } catch (error) {
+    res.status(error.response.status).send(error.response.data);
   }
-};
-
-/**
- * Build the image
- */
-const buildImage = (res, dir, framework, image) => {
-  const options = new DockerOptions(null, `./uploads/${dir}`, true); //machine_name:str (null = use local docker), wd:str, echo_output:bool
-  const docker = new Docker(options);
-
-  addDockerfile(dir, framework);
-
-  docker
-    .command(`build -t ${image} .`)
-    .then((data) => {
-      console.log("data = ", data);
-      pushImage(res, docker, image);
-    })
-    .catch((error) => {
-      console.log("error: ", error);
-      res.send("Image build failed");
-      return;
-    });
-};
-
-app.post("/", createAppDir, upload.array("files"), (req, res) => {
-  const { name, tag, framework } = req.body;
-  const { appDir } = req;
-  const imgTag = tag.trim() ? tag : 'latest'
-
-  buildImage(res, appDir, framework, `${DOCKERHUB_USERNAME}/${name}:${imgTag}`);
 });
 
 app.listen(PORT, () => {
