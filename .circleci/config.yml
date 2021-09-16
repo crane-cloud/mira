@@ -1,0 +1,8 @@
+version: 2.0
+jobs:
+  build:
+    docker:
+      - image: node:14.9.0-alpine
+    steps:
+      - checkout
+      - run: yarn && node index.js
