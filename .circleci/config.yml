@@ -8,7 +8,7 @@ jobs:
       - checkout
       - setup_remote_docker
       - run: docker build -t mira .
-      - deploy: |
+      - run: |
           # login to GCR
 
           # TODO: add rules for stage and prod
