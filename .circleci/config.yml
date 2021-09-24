@@ -1,8 +1,24 @@
 version: 2.0
+general:
+  branches:
+    only:
+      - develop
+      - master
 jobs:
   build:
     docker:
       - image: node:14.9.0-alpine
     steps:
       - checkout
-      - run: yarn && node index.js
+      - setup_remote_docker
+      - run: docker build -t mira .
+      - deploy: |
+          if [ "${CIRCLE_BRANCH}" == "develop" ]; then
+            # login to GCR
+
+            # tag with GCR repo and circleci hash
+            docker tag mira "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
+
+            # push image
+            docker push "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
+          fi
