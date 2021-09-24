@@ -1,9 +1,5 @@
 version: 2.0
-general:
-  branches:
-    only:
-      - develop
-      - master
+
 jobs:
   build:
     docker:
@@ -13,12 +9,23 @@ jobs:
       - setup_remote_docker
       - run: docker build -t mira .
       - deploy: |
-          if [ "${CIRCLE_BRANCH}" == "develop" ]; then
-            # login to GCR
+          # login to GCR
 
-            # tag with GCR repo and circleci hash
-            docker tag mira "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
+          # TODO: add rules for stage and prod
 
-            # push image
-            docker push "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
-          fi
+          # tag with GCR repo and circleci hash
+          docker tag mira "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
+
+          # push image
+          docker push "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only:
+                - develop
+                - master
