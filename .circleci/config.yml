@@ -6,7 +6,7 @@ jobs:
       - image: node:14.9.0-alpine
     steps:
       - checkout
-      - setup_remote_docker
+      # - setup_remote_docker
       - run:
           name: Install docker CLI
           command: apk add --no-cache docker-cli
@@ -16,7 +16,7 @@ jobs:
 
           # login to GCR
 
-          # TODO: add rules for stage and prod
+          # TODO: add rules for dev and prod
 
           # tag with GCR repo and circleci hash
           docker tag mira "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
