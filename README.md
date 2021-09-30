@@ -23,10 +23,15 @@ Automate app containerization.
 - To stop the server: `ctl + c`.
 
 3.  ### Testing
+        Request
 
-    `POST /`
-    `Content-Type: multipart/form-data`
+        `POST /`
+        `Content-Type: multipart/form-data`
 
-    `payload: { files: file (any html file), name: string, tag: string (version), framework: string (use html for now), token: string (log into crane cloud and get token), project: string (any active project in your account) }`
+        `payload: { files: file (any html file), name: string, tag: string (version), framework: string (use html for now), token: string (log into crane cloud and get token), project: string (any active project in your account) }`
 
-The API will be standardized with time. Doesn't need a DB.
+        Response
+    `201`
+    `Content-Type: application/json`
+    `body: { status: string, data: object }`
+    The API will be standardized with time. Doesn't need a DB.
