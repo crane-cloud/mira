@@ -1,37 +1,107 @@
-version: 2.0
+version: 2
+defaults: &defaults
+  docker:
+    - image: circleci/node:8
+      environment:
+        GOOGLE_APPLICATION_CREDENTIALS: /root/mira
+  working_directory: ~/mira
+
+attach_workspace: &attach_workspace
+  attach_workspace:
+    at: ~/mira
+
+filters:
+  filters:
+    branches:
+      only:
+        - master
+        - develop
+        - /(release|hotfix)\/v[0-9].[0-9].[0-9]/
+        - innocent/fix-circleci
+
+persist_to_workspace: &persist_to_workspace
+  persist_to_workspace:
+    root: .
+    paths: .
+
+build_and_push_image: &build_and_push_image
+  run:
+    name: build image
+    command: |
+      export IMG_TAG=$(echo $CIRCLE_SHA1 | cut -c -7)
+      docker login -u _json_key -p "$(echo $GCLOUD_SERVICE_KEY)" https://gcr.io
+      docker build -f Dockerfile -t gcr.io/$GCP_PROJECT_ID/mira:$IMG_TAG .
+      docker push gcr.io/$GCP_PROJECT_ID/mira:$IMG_TAG
+
+configure_gcloud: &configure_gcloud
+  run:
+    name: configure gcloud default settings
+    command: |
+      echo $GCLOUD_SERVICE_KEY > ~/mira/auth_key.json
+      gcloud auth activate-service-account --key-file ~/mira/auth_key.json
+      gcloud container clusters get-credentials $cluster --zone us-central1-a --project $GCP_PROJECT_ID
+
+deploy_to_kubernetes: &deploy_to_kubernetes
+  run:
+    name: update deployment image
+    command: |
+      export IMG_TAG=$(echo $CIRCLE_SHA1 | cut -c -7)
+      ./kubectl set image deployment/mira mira=gcr.io/$GCP_PROJECT_ID/mira:$IMG_TAG --record -n $namespace
 
 jobs:
-  build:
+  build_and_deploy_staging:
     docker:
-      - image: node:14.9.0-alpine
+      - image: google/cloud-sdk
+        environment:
+          GOOGLE_APPLICATION_CREDENTIALS: /root/mira
+          cluster: staging-cluster
+          namespace: cranecloud
+    working_directory: ~/mira
     steps:
       - checkout
       - setup_remote_docker:
           version: 19.03.13
       - run:
-          name: Install docker CLI
-          command: apk add --no-cache docker-cli
-      - run: |
-          # build image
-          docker build -t mira .
+          name: install kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod u+x ./kubectl
 
-          # login to GCR
+      - *configure_gcloud
+      - *build_and_push_image
+      # - *deploy_to_kubernetes
 
-          # TODO: add rules for dev and prod
+  build_and_deploy_production:
+    docker:
+      - image: google/cloud-sdk
+        environment:
+          GOOGLE_APPLICATION_CREDENTIALS: /root/mira
+          cluster: staging-cluster
+          namespace: cranecloud-prod
+    working_directory: ~/crane-cloud
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: install kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod u+x ./kubectl
 
-          # tag with GCR repo and circleci hash
-          docker tag mira "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
-
-          # push image
-          docker push "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
+      - *configure_gcloud
+      - *build_and_push_image
+      - *deploy_to_kubernetes
 
 workflows:
   version: 2
-  build-and-deploy:
+  cranecloud_deployment:
     jobs:
-      - build:
+      - build_and_deploy_staging:
           filters:
             branches:
-              only:
-                - develop
-                - master
+              only: innocent/fix-circleci
+      - build_and_deploy_production:
+          filters:
+            branches:
+              only: master
+
