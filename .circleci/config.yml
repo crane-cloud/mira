@@ -1,0 +1,37 @@
+version: 2.0
+
+jobs:
+  build:
+    docker:
+      - image: node:14.9.0-alpine
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 19.03.13
+      - run:
+          name: Install docker CLI
+          command: apk add --no-cache docker-cli
+      - run: |
+          # build image
+          docker build -t mira .
+
+          # login to GCR
+
+          # TODO: add rules for dev and prod
+
+          # tag with GCR repo and circleci hash
+          docker tag mira "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
+
+          # push image
+          docker push "${GCR_ENDPOINT}/mira:${CIRCLE_SHA1}"
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only:
+                - develop
+                - master
