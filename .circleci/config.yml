@@ -69,7 +69,7 @@ jobs:
 
       - *configure_gcloud
       - *build_and_push_image
-      # - *deploy_to_kubernetes
+      - *deploy_to_kubernetes
 
   build_and_deploy_production:
     docker:
