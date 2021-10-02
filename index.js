@@ -21,7 +21,11 @@ const app = express();
 
 app.use(cors());
 
-app.post("/", createAppDir, upload.array("files"), async (req, res) => {
+app.get("/", (req, res) => {
+  res.status(200).send("Welcome to mira API")
+});
+
+app.post("/containerize", createAppDir, upload.array("files"), async (req, res) => {
   const { project, token, framework, name, tag } = req.body;
 
   try {
