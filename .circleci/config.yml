@@ -17,7 +17,7 @@ filters:
         - master
         - develop
         - /(release|hotfix)\/v[0-9].[0-9].[0-9]/
-        - innocent/fix-circleci
+        - iinnocent/listen-to-all-hosts
 
 persist_to_workspace: &persist_to_workspace
   persist_to_workspace:
@@ -99,7 +99,7 @@ workflows:
       - build_and_deploy_staging:
           filters:
             branches:
-              only: develop
+              only: innocent/listen-to-all-hosts
       - build_and_deploy_production:
           filters:
             branches:
