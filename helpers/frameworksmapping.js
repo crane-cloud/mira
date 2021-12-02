@@ -9,14 +9,14 @@
  */
 const nodeProjectFilter = require("../helpers/nodeProjectFilter");
 
- const frameworksmapping = (framework,dir) => {
+ const frameworksmapping = (framework) => {
     let dockerPath
     switch(framework)  {
         case 'Html-CSS-JS':
             dockerPath= './preset_dockerfiles/html-nginx.txt';
             break;
         case 'NodeJS':
-            nodeProjectFilter(dir);
+          //  nodeProjectFilter(dir);
             dockerPath= './preset_dockerfiles/nodejs.txt';
             break;
         case 'React':
