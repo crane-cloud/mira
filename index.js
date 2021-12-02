@@ -27,53 +27,58 @@ app.get("/", (req, res) => {
 });
 
 app.post("/containerize", createAppDir, upload.array("files"), async (req, res) => {
-  const { project, token, framework, name, tag, files  } = req.body;
+  const { project, token, framework, name, tag  } = req.body;
   const { zipfileDir,appDir,fileDir,fileName } = req;
-   unZipRepo(zipfileDir,fileDir,fileName,framework)
-    //testing  unzipping and filtering zip folder with project
+ 
 
-    // try {
-    //   const options =
-    //    new DockerOptions(null, `./uploads/${appDir}/${path.parse(fileName).name}}`, true);
-    //   const docker = new Docker(options);
+   unZipRepo(zipfileDir,fileDir,fileName,framework, async function(err) {
+     if(err){
+        throw err
+     }else{
+      try {
+      const options =
+       new DockerOptions(null, `./uploads/${appDir}/${path.parse(fileName).name}`, true);
+      const docker = new Docker(options);
   
-    //   const image = `${DOCKERHUB_USERNAME}/${name}:${tag}`;
+      const image = `${DOCKERHUB_USERNAME}/${name}:${tag}`;
   
-    //   // auth
-    //   await docker.command(
-    //     `login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}`
-    //   );
+      // auth
+      await docker.command(
+        `login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}`
+      );
   
-    //   // build
-    //   await docker.command(`build -t ${image} .`);
+      // build
+      await docker.command(`build -t ${image} .`);
   
-    //   // push
-    //   await docker.command(`push ${image}`);
+      // push
+      await docker.command(`push ${image}`);
   
-    //   // deploy
-    //   // const deploy = await axios.post(
-    //   //   `${BASE_URL}/projects/${project}/apps`-,
-    //   //   {
-    //   //     env_vars: {},
-    //   //     image: image,
-    //   //     name: `${name}-${tag}`,
-    //   //     project_id: project,
-    //   //     private_image: false,
-    //   //     replicas: 1,
-    //   //   },
-    //   //   {
-    //   //     headers: {
-    //   //       Authorization: `Bearer ${token}`,
-    //   //     },
-    //   //   }
-    //   // );
-  
-    //   res.status(201).send(deploy.data);
-    // } catch (error) {
-    //   console.log(error);
-    //   //res.status(error.response.status).send(error.response.data);
-    // }
-  
+      // deploy
+      const deploy = await axios.post(
+        `${BASE_URL}/projects/${project}/apps`,
+        {
+          env_vars: {},
+          image: image,
+          name: `${name}-${tag}`,
+          project_id: project,
+          private_image: false,
+          replicas: 1,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+     res.status(201).send(deploy.data);
+    } catch (error) {
+      console.log(error);
+      res.status(501).send(error.response.data);
+    }
+  }
+});
+
+   
 });
 
 

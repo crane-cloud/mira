@@ -17,11 +17,6 @@ const fileStorageEngine = multer.diskStorage({
     req.zipfileDir =`${getFolderPath(req.appDir, file.originalname)}${file.originalname}`;
     req.fileDir = getFolderPath(req.appDir, file.originalname);
     req.fileName = getFile(file.originalname);
-    //unzip
-    //  fs.createReadStream(`${getFolderPath(req.appDir, file.originalname)}${file.originalname}`)
-    //  .pipe(unzipper.Extract( {path: `${getFolderPath(req.appDir, file.originalname)}` }));
-    //  req.unzippedDir = 
-    //  `${getFolderPath(req.appDir, file.originalname)}${path.parse(file.originalname).name}`
   },
 });
 
