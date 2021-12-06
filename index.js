@@ -53,6 +53,15 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       await docker.command(`push ${image}`);
   
       // deploy
+      let port;
+      if(framework == "React"){
+        port = 3000;
+      }else if(framework == "NodeJS"){
+        port= 8080;
+
+      }else{
+        port =80;
+      }
       const deploy = await axios.post(
         `${BASE_URL}/projects/${project}/apps`,
         {
@@ -62,6 +71,7 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
           project_id: project,
           private_image: false,
           replicas: 1,
+          port: port,
         },
         {
           headers: {
