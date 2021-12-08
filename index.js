@@ -18,6 +18,7 @@ const {
 } = require("./config");
 
 const axios = require("axios");
+const { error } = require("console");
 const app = express();
 
 app.use(cors());
@@ -31,8 +32,7 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
   const { zipfileDir,appDir,fileDir,fileName } = req;
    unZipRepo(zipfileDir,fileDir,fileName,framework, async function(err) {
      if(err){
-        throw err
-        res.status(500).send(err.response.data);
+        res.status(500).send(err);
      }else{
       try {
       const options =
@@ -72,7 +72,7 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
      res.status(201).send(deploy.data);
     } catch (error) {   
       console.log(error)
-      res.status(501).send(error);
+      res.status(501).send("failed to deploy app");
     }
     }
  });
