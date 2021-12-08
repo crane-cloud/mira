@@ -18,6 +18,7 @@ const {
 } = require("./config");
 
 const axios = require("axios");
+const { error } = require("console");
 const app = express();
 
 app.use(cors());
@@ -31,9 +32,8 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
   const { zipfileDir,appDir,fileDir,fileName } = req;
    unZipRepo(zipfileDir,fileDir,fileName,framework, async function(err) {
      if(err){
-        throw err
+        res.status(500).send(err);
      }else{
-
       try {
       const options =
        new DockerOptions(null, `./uploads/${appDir}/${path.parse(fileName).name}`, true);
@@ -70,11 +70,11 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
         }
       );
      res.status(201).send(deploy.data);
-    } catch (error) {
-     // console.log(error);
-      res.status(501).send(error.response.data);
+    } catch (error) {   
+      console.log(error)
+      res.status(501).send("failed to deploy app");
     }
-     }
+    }
  });
    
 });
