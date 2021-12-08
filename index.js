@@ -82,7 +82,7 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
      res.status(201).send(deploy.data);
     } catch (error) {
      // console.log(error);
-      res.status(501).send(error.response.data);
+      res.status(501).send(error);
     }
      }
  });
