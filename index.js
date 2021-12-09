@@ -15,6 +15,7 @@ const {
   DOCKERHUB_PASSWORD,
   BASE_URL,
   PORT,
+  IS_ENV_ARM,
 } = require("./config");
 
 const axios = require("axios");
@@ -45,13 +46,19 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       await docker.command(
         `login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}`
       );
-  
+      if(IS_ENV_ARM === "true"){
+        console.log("Am performing ARM build");
+        await docker.command(`buildx build --platform linux/amd64 --push -t ${image} .`);
+      }
+      else{     
+        console.log("Am NOT performing ARM build");
+        console.log(IS_ENV_ARM);
       // build
       await docker.command(`build -t ${image} .`);
   
       // push
       await docker.command(`push ${image}`);
-  
+    }
       // deploy
       let port;
       if(framework == "React"){
