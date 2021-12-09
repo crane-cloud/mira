@@ -15,9 +15,11 @@ const {
   DOCKERHUB_PASSWORD,
   BASE_URL,
   PORT,
+  IS_ENV_ARM,
 } = require("./config");
 
 const axios = require("axios");
+const { error } = require("console");
 const app = express();
 
 app.use(cors());
@@ -31,9 +33,8 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
   const { zipfileDir,appDir,fileDir,fileName } = req;
    unZipRepo(zipfileDir,fileDir,fileName,framework, async function(err) {
      if(err){
-        throw err
+        res.status(500).send(err);
      }else{
-
       try {
       const options =
        new DockerOptions(null, `./uploads/${appDir}/${path.parse(fileName).name}`, true);
@@ -45,13 +46,16 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       await docker.command(
         `login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}`
       );
-  
+      if(IS_ENV_ARM === "true"){
+        await docker.command(`buildx build --platform linux/amd64 --push -t ${image} .`);
+      }
+      else{     
       // build
       await docker.command(`build -t ${image} .`);
   
       // push
       await docker.command(`push ${image}`);
-  
+    }
       // deploy
       let port;
       if(framework == "React"){
@@ -80,11 +84,11 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
         }
       );
      res.status(201).send(deploy.data);
-    } catch (error) {
-     // console.log(error);
-      res.status(501).send(error);
+    } catch (error) {   
+      console.log(error)
+      res.status(501).send("failed to deploy app");
     }
-     }
+    }
  });
    
 });
