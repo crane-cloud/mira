@@ -47,12 +47,9 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
         `login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}`
       );
       if(IS_ENV_ARM === "true"){
-        console.log("Am performing ARM build");
         await docker.command(`buildx build --platform linux/amd64 --push -t ${image} .`);
       }
       else{     
-        console.log("Am NOT performing ARM build");
-        console.log(IS_ENV_ARM);
       // build
       await docker.command(`build -t ${image} .`);
   
