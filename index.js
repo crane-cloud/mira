@@ -80,7 +80,10 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       }else if(framework == "NodeJS"){
         port= 8080;
 
-      }else{
+      }else if(framework == "Flask"){
+        port = 5000;
+      }
+      else{
         port =80;
       }
       if(registry === "Dockerhub"){
