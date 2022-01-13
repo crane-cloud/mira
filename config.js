@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const DOCKERHUB_USERNAME = process.env.DOCKERHUB_USERNAME;
 const DOCKERHUB_PASSWORD = process.env.DOCKERHUB_PASSWORD;
+const HARBOR_USERNAME = process.env.HARBOR_USERNAME;
+const HARBOR_PASSWORD = process.env.HARBOR_PASSWORD;
 
 const BASE_URL = process.env.BASE_URL;
 const PORT = process.env.PORT;
@@ -18,4 +20,6 @@ module.exports = {
   BASE_URL,
   PORT,
   IS_ENV_ARM,
+  HARBOR_USERNAME,
+  HARBOR_PASSWORD,
 };

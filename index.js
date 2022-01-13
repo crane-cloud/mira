@@ -16,6 +16,8 @@ const {
   BASE_URL,
   PORT,
   IS_ENV_ARM,
+  HARBOR_USERNAME,
+  HARBOR_PASSWORD,
 } = require("./config");
 
 const axios = require("axios");
@@ -29,7 +31,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/containerize", createAppDir, upload.array("files"), async (req, res) => {
-  const { project, token, framework, name, tag  } = req.body;
+  const { project, token, framework, name, tag, registry  } = req.body;
   const { zipfileDir,appDir,fileDir,fileName } = req;
    unZipRepo(zipfileDir,fileDir,fileName,framework, async function(err) {
      if(err){
@@ -39,13 +41,28 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       const options =
        new DockerOptions(null, `./uploads/${appDir}/${path.parse(fileName).name}`, true);
       const docker = new Docker(options);
-  
-      const image = `${DOCKERHUB_USERNAME}/${name}:${tag}`;
+      let image = "";
+      
+      console.log(registry);
+      if(registry === "Harbor"){
+
+      image = `registry.cranecloud.io/autocontainerization-registry/${name}:${tag}`;
+      console.log("doing Harbor login...");
+      // auth
+      await docker.command(
+        `login -u ${HARBOR_USERNAME} -p ${HARBOR_PASSWORD} registry.cranecloud.io`
+      );
+
+      }else{
+      console.log("doing Dockerhub login...");
+    
+      image = `${DOCKERHUB_USERNAME}/${name}:${tag}`;
   
       // auth
       await docker.command(
         `login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}`
       );
+    }
       if(IS_ENV_ARM === "true"){
         await docker.command(`buildx build --platform linux/amd64 --push -t ${image} .`);
       }
@@ -66,29 +83,34 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       }else{
         port =80;
       }
-      const deploy = await axios.post(
-        `${BASE_URL}/projects/${project}/apps`,
-        {
-          env_vars: {},
-          image: image,
-          name: `${name}-${tag}`,
-          project_id: project,
-          private_image: false,
-          replicas: 1,
-          port: port,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      if(registry === "Dockerhub"){
+        const deploy = await axios.post(
+          `${BASE_URL}/projects/${project}/apps`,
+          {
+            env_vars: {},
+            image: image,
+            name: `${name}-${tag}`,
+            project_id: project,
+            private_image: false,
+            replicas: 1,
+            port: port,
           },
-        }
-      );
-     res.status(201).send(deploy.data);
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+       res.status(201).send(deploy.data);
+      }
+      
     } catch (error) {   
       console.log(error)
       res.status(501).send("failed to deploy app");
     }
-    }
+
+    
+   }
  });
    
 });
