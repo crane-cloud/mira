@@ -43,7 +43,6 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       const docker = new Docker(options);
       let image = "";
       
-      console.log(registry);
       if(registry === "Harbor"){
 
       image = `registry.cranecloud.io/autocontainerization-registry/${name}:${tag}`;
@@ -86,7 +85,6 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       else{
         port =80;
       }
-      if(registry === "Dockerhub"){
         const deploy = await axios.post(
           `${BASE_URL}/projects/${project}/apps`,
           {
@@ -104,8 +102,7 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
             },
           }
         );
-       res.status(201).send(deploy.data);
-      }
+       res.status(201).send(deploy.data);      
       
     } catch (error) {   
       console.log(error)
