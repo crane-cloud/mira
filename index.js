@@ -82,6 +82,9 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       }else if(framework == "Flask"){
         port = 5000;
       }
+    else if(framework == "Django"){
+      port = 5000;
+    }
       else{
         port =80;
       }
