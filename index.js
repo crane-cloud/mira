@@ -35,7 +35,7 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
   const { zipfileDir,appDir,fileDir,fileName } = req;
    unZipRepo(zipfileDir,fileDir,fileName,framework, async function(err) {
      if(err){
-        res.status(500).send(err);
+      return res.status(500).send(err);
      }else{
       try {
       const options =
@@ -82,6 +82,9 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
       }else if(framework == "Flask"){
         port = 5000;
       }
+    else if(framework == "Django"){
+      port = 5000;
+    }
       else{
         port =80;
       }

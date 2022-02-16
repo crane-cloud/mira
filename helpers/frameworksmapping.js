@@ -24,7 +24,10 @@ const nodeProjectFilter = require("../helpers/nodeProjectFilter");
             break;  
         case 'Flask':
             dockerPath= './preset_dockerfiles/flask.txt'; 
-            break;    
+            break;   
+        case 'Django':
+            dockerPath= './preset_dockerfiles/django.txt'; 
+            break;  
     }
     return dockerPath;
 }
