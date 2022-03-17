@@ -27,7 +27,13 @@ const nodeProjectFilter = require("../helpers/nodeProjectFilter");
             break;   
         case 'Django':
             dockerPath= './preset_dockerfiles/django.txt'; 
-            break;  
+            break;
+        case 'Laravel':
+            dockerPath= './preset_dockerfiles/laravel.txt'; 
+            break;
+        case 'Laravel-custom':
+            dockerPath= ''; 
+        break;
     }
     return dockerPath;
 }
