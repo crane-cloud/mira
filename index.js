@@ -85,7 +85,7 @@ app.post("/containerize", createAppDir, upload.array("files"), async (req, res) 
     else if(framework == "Django"){
       port = 5000;
     }
-    else if(framework == "Laravel"){
+    else if(framework == "Laravel" || framework == "Laravel-custom"){
       port = 8000;
     }
       else{
