@@ -31,6 +31,9 @@ const nodeProjectFilter = require("../helpers/nodeProjectFilter");
         case 'Laravel':
             dockerPath= './preset_dockerfiles/laravel.txt'; 
             break;
+        case 'Laravel-custom':
+            dockerPath= ''; 
+        break;
     }
     return dockerPath;
 }
