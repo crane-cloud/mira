@@ -135,7 +135,7 @@ app.post(
             }
           );
           if (deploy.status === 201) {
-            res.write(JSON.stringify({ timestamp: new Date().toISOString(), message: "App deployed successfully..."}))
+            res.write(JSON.stringify({ timestamp: new Date().toISOString(), message: "App deployed successfully...", success:true }))
             deleteImageProcess = exec(
               `docker image rm ${image}`,
               (err, stdout, stderr) => {
@@ -157,9 +157,8 @@ app.post(
            const log =  { timestamp: new Date().toISOString(), message: error.message };
             res.write(JSON.stringify(log))
           }
-          res.write(JSON.stringify({ timestamp: new Date().toISOString(), message: "Failed to deploy" }))
+          res.write(JSON.stringify({ timestamp: new Date().toISOString(), message: "Failed to deploy", success:false }))
           res.end()
-
         } finally { 
           deleteFolderProcess = exec(
             `rm -rf ./uploads/${appDir}`,
