@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-
 const dockerCLI = require("docker-cli-js");
 const { exec } = require("child_process");
 const DockerOptions = dockerCLI.Options;
@@ -9,6 +8,8 @@ const upload = require("./middleware/multer");
 const createAppDir = require("./middleware/createDir");
 const unZipRepo = require("./helpers/unZipRepo");
 const path = require("path");
+const { stdout, stderr } = process;
+const fs = require('fs');
 
 const {
   DOCKERHUB_USERNAME,
@@ -30,6 +31,8 @@ app.get("/", (req, res) => {
   res.status(200).send("Welcome to mira API");
 });
 
+
+
 app.post(
   "/containerize",
   createAppDir,
@@ -41,6 +44,12 @@ app.post(
       if (err) {
         return res.status(500).send(err);
       } else {
+
+        res.writeHead( 200, {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Transfer-Encoding': 'chunked',
+          'X-Content-Type-Options': 'nosniff'
+      } );
         try {
           const options = new DockerOptions(
             null,
@@ -48,11 +57,12 @@ app.post(
             true
           );
           const docker = new Docker(options);
+          
           let image = "";
 
           if (registry === "Harbor") {
             image = `registry.cranecloud.io/autocontainerization-registry/${name}:${tag}`;
-            console.log("doing Harbor login...");
+            console.log("Accessing Harbor ...");
             // auth
             await docker.command(
               `login -u ${HARBOR_USERNAME} -p ${HARBOR_PASSWORD} registry.cranecloud.io`
@@ -67,10 +77,24 @@ app.post(
               `login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}`
             );
           }
+
+          stdout.write = (data) => {
+            const log = { timestamp: new Date().toISOString(), message: data.toString().trim() };
+           
+            res.write(JSON.stringify(log))
+          };
           
+          stderr.write = (data) => {
+            const log = { timestamp: new Date().toISOString(), message: data.toString().trim() };
+            
+            res.write(JSON.stringify(log))
+          };
+
           if (IS_ENV_ARM === "true") {
-            await docker.command(
+             await docker.command(
               `buildx build --platform linux/amd64 --push -t ${image} .`);
+
+              
           } else {
             // build
             await docker.command(`build -t ${image} .`);
@@ -111,6 +135,7 @@ app.post(
             }
           );
           if (deploy.status === 201) {
+            res.write(JSON.stringify({ timestamp: new Date().toISOString(), message: "App deployed successfully..."}))
             deleteImageProcess = exec(
               `docker image rm ${image}`,
               (err, stdout, stderr) => {
@@ -124,29 +149,28 @@ app.post(
                 );
               }
             );
-
-            deleteImageProcess.unref();
-          }
-
-          res.status(201).send(deploy.data);
+           deleteImageProcess.unref();
+          }          
+          res.end()
         } catch (error) {
-          console.log(error);
-          res.status(501).send("failed to deploy app");
-        } finally {
+          if(error.message){
+           const log =  { timestamp: new Date().toISOString(), message: error.message };
+            res.write(JSON.stringify(log))
+          }
+          res.write(JSON.stringify({ timestamp: new Date().toISOString(), message: "Failed to deploy" }))
+          res.end()
+
+        } finally { 
           deleteFolderProcess = exec(
             `rm -rf ./uploads/${appDir}`,
             (err, stdout, stderr) => {
               if (err) {
-                console.error("Error deleting folder in finally block:", err);
+                console.error("Internal error:", err);
                 return;
               }
-              console.log(
-                "Folder deleted successfully in finally block:",
-                stdout
-              );
+              console.log(stdout);
             }
           );
-
           deleteFolderProcess.unref();
         }
       }
